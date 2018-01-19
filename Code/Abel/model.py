@@ -89,7 +89,9 @@ class SchellingModel(Model):
 ##                model_reporters={"happy": lambda self: self.happy},
 ##                agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]})
         self.datacollector = DataCollector(
-                model_reporters={"status": lambda self: self.status},
+                model_reporters={"Status": lambda self: self.status,
+                                 "Condition": lambda self: self.average_conditions,
+                                 "Income": lambda self: self.average_income},
                 agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]})
 
         self.running = True

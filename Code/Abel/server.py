@@ -24,23 +24,14 @@ class SchellingTextVisualization(TextVisualization):
         status_viz = TextData(self.model, 'status')
         self.elements = [grid_viz, status_viz]
 
-##    @staticmethod
-##    def ascii_agent(a):
-##        '''
-##        Minority agents are X, Majority are O.
-##        '''
-##        if a.type == 0:
-##            return 'O'
-##        if a.type == 1:
-##            return 'X'
     @staticmethod
     def ascii_agent(a):
         '''
         Minority agents are X, Majority are O.
         '''
-        if a.wealth < -0.2:
+        if a.wealth < 0.4:
             return 'L'
-        elif a.wealth < 0.2:
+        elif a.wealth < 0.6:
             return 'M'
         else:
             return 'H'
@@ -53,9 +44,32 @@ class StatusElement(TextElement):
 
     def __init__(self):
         pass
+    def render(self, model):
+        return "Status: " + str(round(model.status,3))
+
+class ConditionElement(TextElement):
+    def __init__(self):
+        pass
+    def render(self, model):
+        return "Average Property Condition: " + str(round(
+                                    model.average_conditions, 3))
+class IncomeElement(TextElement):
+    def __init__(self):
+        pass
+    def render(self, model):
+        return "Average Income: " + str(round(model.average_income, 3))
+
+class LegendElement(TextElement):
+    '''
+    Display a text count of how many happy agents there are.
+    '''
+
+    def __init__(self):
+        pass
 
     def render(self, model):
-        return "Status: " + str(model.status)
+        return  "Red: Low Income\n Purple: Middle Income \n Blue: High Income \n"
+    
 
 def schelling_draw(agent):
     '''
@@ -72,8 +86,13 @@ def schelling_draw(agent):
 
 
 status_element = StatusElement()
+legend_element = LegendElement()
+condition_element = ConditionElement()
+income_element = IncomeElement()
 canvas_element = CanvasGrid(schelling_draw, 50, 50, 500, 500)
-status_chart = ChartModule([{"Label": "status", "Color": "Black"}])
+status_chart = ChartModule([{"Label": "Status", "Color": "Black"},
+                            {"Label": "Condition", "Color": "Green"},
+                            {"Label": "Income", "Color": "Yellow"}])
 
 model_params = {
     "height": 50,
@@ -84,6 +103,7 @@ model_params = {
 }
 
 server = ModularServer(SchellingModel,
-                       [canvas_element, status_element, status_chart],
+                       [canvas_element, legend_element, condition_element, income_element,
+                        status_element, status_chart],
                        "Schelling", model_params)
 server.launch()
