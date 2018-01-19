@@ -118,7 +118,7 @@ class SchellingModel(Model):
 					break
 					
 			if rent_gap > 0 and income > self.conditions[pos[0]][pos[1]]:
-				self.conditions[pos[0]][pos[1]] += bounded_normal(self.S - self.conditions[pos[0]][pos[1]],0.1,0,0.5)
+				self.conditions[pos[0]][pos[1]] += bounded_normal(self.S - self.conditions[pos[0]][pos[1]],0.1,0,0.8)
 				np.clip(self.conditions,0,1)
 				
 			agent = SchellingAgent(pos, self, income)
