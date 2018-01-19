@@ -59,8 +59,8 @@ class SchellingAgent(Agent):
 ##            self.__del__(self)
         #renovate
         elif  self.model.income_gap[x,y] > 0 and self.wealth > self.model.condition_matrix[x, y]:
-            self.model.condition_matrix[x, y] += np.random.normal(self.model.status
-                                                - self.model.condition_matrix[x, y], 0.1)
+            self.model.condition_matrix[x, y] += bounded_repeated_normal(self.model.status
+                                                - self.model.condition_matrix[x, y], 0.1, 0, .5)
 
 			
 class SchellingModel(Model):
@@ -107,7 +107,7 @@ class SchellingModel(Model):
         for cell in self.grid.coord_iter():
             x = cell[1]
             y = cell[2]
-            wealth = self.condition_matrix[x,y] + np.random.normal(0., 0.025)
+            wealth = self.condition_matrix[x,y] + bounded_repeated_normal(0., 0.025, 0., 1.)
             if random.random() < self.density:
                 agent = SchellingAgent((x, y), self, wealth)
                 self.grid.position_agent(agent, (x, y))
@@ -145,7 +145,8 @@ class SchellingModel(Model):
                                                              mode='same', boundary='wrap')/9
 
         #status + new condition and new income + random
-        self.status += self.average_conditions +  self.average_income + np.random.normal(0, self.sdelta)
+        self.status += self.average_conditions +  self.average_income + bounded_repeated_normal(0,
+                                                                            self.sdelta, -.5, 0.5)
 
         #Update rent gap
         self.rent_gap = np.maximum(self.average_condition_matrix - self.condition_matrix, 0)
@@ -184,7 +185,7 @@ class SchellingModel(Model):
         #Let agents move to the neighborhood
         for forsalecell in self.grid.empties:
             x,y = forsalecell[0], forsalecell[1]
-            wealth = np.random.normal(0.5*(self.status + self.property_prices[x,y]), 0.1) #bounded draws
+            wealth = bounded_repeated_normal(0.5*(self.status + self.property_prices[x,y]), 0.1, 0., 1.) 
             if self.property_prices[x,y] < wealth:
                 agent = SchellingAgent((x, y), self, wealth =wealth)
                 self.grid.position_agent(agent, (x, y))
@@ -196,11 +197,13 @@ class SchellingModel(Model):
 
         #Collect data
         self.datacollector.collect(self)
-        
-##        if self.happy == self.schedule.get_agent_count():
-##            self.running = False
       
-
+def bounded_repeated_normal(mu,sigma,minimum,maximum):
+    mu = np.clip(mu,minimum,maximum)
+    result = sigma*np.random.randn() + mu
+    while result<minimum or result>maximum:
+        result = sigma*np.random.randn() + mu
+    return result
 moore = np.array([[1,1,1], [1,1,1], [1,1,1]])
 ##SM = SchellingModel(25, 25, 0.8, 0.1, 1)
 ##print(SM.grid)
