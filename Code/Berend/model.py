@@ -106,13 +106,13 @@ class SchellingModel(Model):
 			pos = self.grid.find_empty()
 			price = self.calc_price(pos)
 			rent_gap = self.calc_rent_gap(pos)
-			temp = 0
+			tries = 0
 			while True:
-				temp += 1
+				tries += 1
 				income = bounded_normal(0.5*(self.S+price), 0.1, 0.25*(self.S+price), min(0.75*(self.S+price),1))
 				if income >= price:
 					break
-				if temp > 10 or price > 0.97:
+				if tries > 50 or price > 0.97:
 					income = price
 					rent_gap = 0
 					break
