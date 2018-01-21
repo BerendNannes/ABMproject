@@ -7,15 +7,11 @@ from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
 def bounded_normal(mu,sigma,minimum,maximum):
+    mu = np.clip(mu,minimum,maximum)
     while True:
         X = np.random.normal(mu,sigma)
         if X >= minimum and X <= maximum:
             return X
-    """
-    mu = np.clip(mu,minimum,maximum)
-    result = sigma*np.random.randn() + mu
-    return np.clip(result,minimum,maximum)
-    """
 
 class SchellingAgent(Agent):
     '''
@@ -32,47 +28,38 @@ class SchellingAgent(Agent):
         super().__init__(pos, model)
         self.pos = pos
         self.income = income
+        self.empty = False
 
     def step(self):
         # shortened references
         model = self.model
         conditions = model.conditions
 
-        # Booleans used for advance function
-        self.empty = False
-        self.improved = False
-
-        neighbors = self.model.grid.get_neighbors(self.pos,True)
-        neighborhood = self.model.grid.get_neighborhood(self.pos,True)
+        neighbors = model.grid.get_neighbors(self.pos,True)
+        neighborhood = model.grid.get_neighborhood(self.pos,True)
 
         # Calculate income gap
         neighbor_incomes = [neighbor.income for neighbor in neighbors]
         mean_income = sum(neighbor_incomes) / len(neighbor_incomes) 
         income_gap = max(0.0, self.income - mean_income)
 
-        # Prepare list with neighboring property conditions
-        neighborhood_conditions = []
-        for cell in neighborhood:
-            x,y = cell
-            neighborhood_conditions.append(conditions[x,y])
-
         x,y = self.pos
 
         # Decide if occupant moves out
         U = np.random.uniform()
-        if U < model.mobility + income_gap:
+        if U < model.mobility*(1.5 - model.status + income_gap):
             self.empty = True
             self.price = 0.5*(conditions[x,y]+mean_income)
 
-        # Decide if condition improves
-        if not self.empty:
-            # First, calculate rent gap
-            mean_condition = sum(neighborhood_conditions) / len(neighborhood_conditions)
-            rent_gap = max(0.0, mean_condition - conditions[x,y])
+        if self.empty:
+            # Prepare list with neighboring property conditions
+            neighborhood_conditions = []
+            for cell in neighborhood:
+                neighborhood_conditions.append(conditions[cell[0],cell[1]])
 
-            if rent_gap > 0 and self.income > conditions[x,y]:
-                self.improved = True
-                self.improvement = bounded_normal(model.status-conditions[x,y],0.1,0.0,0.5)
+            # Calculate rent gap
+            mean_condition = sum(neighborhood_conditions) / len(neighborhood_conditions)
+            self.rent_gap = max(0.0, mean_condition - conditions[x,y])
 
     def advance(self):
         # shortened references
@@ -80,15 +67,20 @@ class SchellingAgent(Agent):
         conditions = model.conditions
 
         if self.empty:
-            income = bounded_normal(0.5*(model.status+self.price),0.1,
-                                    self.price,min(1.0,0.75*(model.status+self.price)))
+            bound = model.status+self.price            
+            income = bounded_normal(0.5*bound,0.1,0.25*bound,min(1.0,0.75*bound))
 
             model.income_change += income - self.income
             self.income = income
 
-        x,y = self.pos
-        if self.improved:
-            conditions[x,y] = np.clip(conditions[x,y]+self.improvement,0,1)
+            x,y = self.pos
+
+            # Decide if new owners improve the property
+            if self.rent_gap > 0 and income > conditions[x,y]:
+                improvement = bounded_normal(model.status-conditions[x,y],0.1,0.0,0.5)
+                conditions[x,y] = np.clip(conditions[x,y]+improvement,0,1)
+
+            self.empty = False
 
 class SchellingModel(Model):
     '''

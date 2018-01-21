@@ -87,7 +87,7 @@ model_params = {
 	"width": grid_size,
 	"depreciation_rate": UserSettableParameter("slider", "Depreciation Rate", 0.002, 0.00, 0.01, 0.001),
 	"mobility": UserSettableParameter("slider", "Agent mobility", 0.02, 0.00, 0.10, 0.005),
-	"status": UserSettableParameter("slider", "Initial Neighborhood Condition", 0.25, 0.00, 1.00, 0.05),
+	"status": UserSettableParameter("slider", "Initial Neighborhood Status", 0.25, 0.00, 1.00, 0.05),
 	"stat_var": UserSettableParameter("slider", "Status Variability (Noise)", 0.025, 0.00, 0.10, 0.005),
 
 
