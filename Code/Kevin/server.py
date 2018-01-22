@@ -70,8 +70,8 @@ def schelling_draw(agent):
 	else:
 		portrayal["Color"] = "Green"
 	
-	if agent is None:
-		portrayal["Color"] = "Black"
+	if agent.empty == True:
+		portrayal["Color"] = "White"
 		#return
 	return portrayal
 
