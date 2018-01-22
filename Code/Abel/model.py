@@ -11,7 +11,7 @@ class SchellingAgent(Agent):
     '''
     Schelling segregation agent
     '''
-    def __init__(self, pos, model, wealth, agent_type=0, minority_pc=0, pa = 0.0125):
+    def __init__(self, pos, model, wealth, pa = 0.0125):
         '''
         Create a new Schelling agent.
 
@@ -22,7 +22,6 @@ class SchellingAgent(Agent):
         '''
         super().__init__(pos, model)
         self.pos = pos
-        self.type = agent_type
         self.wealth = wealth
         self.pa = pa
         
@@ -67,16 +66,14 @@ class SchellingModel(Model):
     '''
     Model class for the Schelling segregation model.
     '''
-    def __init__(self, height, width, density, minority_pc, homophily,
-                 deprate=0.0028, sdelta=0.025):
+    def __init__(self, height, width, density,
+                 deprate=0.0028, sdelta=0.025, pa = 0.0125):
         '''
         '''
 
         self.height = height
         self.width = width
         self.density = density
-        self.minority_pc = minority_pc
-        self.homophily = homophily
 
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(height, width, torus=True)
@@ -84,6 +81,7 @@ class SchellingModel(Model):
         self.status = 0.5
         self.deprate = deprate
         self.sdelta = sdelta
+        self.pa = pa
 
 ##        self.datacollector = DataCollector(
 ##                model_reporters={"happy": lambda self: self.happy},
@@ -109,7 +107,7 @@ class SchellingModel(Model):
             y = cell[2]
             wealth = self.condition_matrix[x,y] + bounded_repeated_normal(0., 0.025, 0., 1.)
             if random.random() < self.density:
-                agent = SchellingAgent((x, y), self, wealth)
+                agent = SchellingAgent((x, y), self, wealth, pa=self.pa)
                 self.grid.position_agent(agent, (x, y))
                 self.schedule.add(agent)
                 self.income_matrix[x,y] = agent.wealth
@@ -187,7 +185,7 @@ class SchellingModel(Model):
             x,y = forsalecell[0], forsalecell[1]
             wealth = bounded_repeated_normal(0.5*(self.status + self.property_prices[x,y]), 0.1, 0., 1.) 
             if self.property_prices[x,y] < wealth:
-                agent = SchellingAgent((x, y), self, wealth =wealth)
+                agent = SchellingAgent((x, y), self, wealth =wealth, pa=self.pa)
                 self.grid.position_agent(agent, (x, y))
                 self.schedule.add(agent)
                 self.income_matrix[x,y] = agent.wealth
@@ -205,5 +203,4 @@ def bounded_repeated_normal(mu,sigma,minimum,maximum):
         result = sigma*np.random.randn() + mu
     return result
 moore = np.array([[1,1,1], [1,1,1], [1,1,1]])
-##SM = SchellingModel(25, 25, 0.8, 0.1, 1)
-##print(SM.grid)
+

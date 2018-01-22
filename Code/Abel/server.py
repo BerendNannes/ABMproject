@@ -98,8 +98,9 @@ model_params = {
     "height": 50,
     "width": 50,
     "density": UserSettableParameter("slider", "Agent density", 0.9, 0.1, 1.0, 0.05),
-    "minority_pc": UserSettableParameter("slider", "Fraction minority", 0.5, 0.00, 1.0, 0.05),
-    "homophily": UserSettableParameter("slider", "Homophily", 5, 0, 8, 1)
+    "deprate": UserSettableParameter("slider", "Depreciation Rate", 0.0028, 0.00, 1.0, 0.01),
+    "sdelta": UserSettableParameter("slider", "Sdelta", 0.025, 0, 1, 0.01),
+    "pa": UserSettableParameter("slider", "Pa", 0.0125, 0, 1, 0.01)
 }
 
 server = ModularServer(SchellingModel,
