@@ -6,6 +6,8 @@ from mesa.time import SimultaneousActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
+from collections import Counter
+
 def bounded_normal(mu,sigma,minimum,maximum):
     mu = np.clip(mu,minimum,maximum)
     while True:
@@ -51,7 +53,7 @@ class SchellingAgent(Agent):
         if not self.empty and U < model.mobility*(1.5 - model.status + income_gap):
             self.move_out = True
             self.empty = True
-            self.price = 0.5*(conditions[x,y]+mean_income)
+            self.price = (conditions[x,y] + mean_income + self.model.gradient_param*y/self.model.grid.height)/3
 
         if self.empty:
             # Prepare list with neighboring property conditions
@@ -93,17 +95,26 @@ class SchellingAgent(Agent):
             else:
                 self.price = 0.5*(self.price + income)
 
+    def income_type(self):
+        if self.income < 0.33:
+            return 1
+        elif self.income >= 0.33 and self.income < 0.67:
+            return 2
+        else:
+            return 3
+
 class SchellingModel(Model):
     '''
     Model class for the Schelling segregation model.
     '''
 
-    def __init__(self, height, width, depreciation_rate, mobility, status, stat_var):
+    def __init__(self, height, width, depreciation_rate, mobility, status, stat_var, gradient_param):
         # Set model parameters
         self.depreciation_rate = depreciation_rate
         self.mobility = mobility
         self.status = status
         self.stat_var = stat_var
+        self.gradient_param = gradient_param
 
         # Global tracking variables
         self.mean_income = 0.0
@@ -114,12 +125,21 @@ class SchellingModel(Model):
         self.datacollector = DataCollector(
             model_reporters={"status": lambda m : m.status, 
                              "income": lambda m : m.mean_income,
-                             "condition": lambda m: m.mean_condition},
+                             "condition": lambda m: m.mean_condition,
+                             "house_numbers": lambda m : m.house_numbers,
+                            "low15": lambda m : m.house_numbers[0],
+                             "middle15": lambda m : m.house_numbers[1],
+                             "high15": lambda m : m.house_numbers[2],
+                             "low45": lambda m : m.house_numbers[6],
+                             "middle45": lambda m : m.house_numbers[7],
+                             "high45": lambda m : m.house_numbers[8]},
             agent_reporters={"x": lambda a: a.pos[0], "y": lambda a: a.pos[1]})
 
         self.running = True
 
         self.conditions = np.zeros((width,height))
+
+        self.house_numbers = [0,0,0,0,0,0,0,0,0]
 
         # Set up agents
         # We use a grid iterator that returns
@@ -143,6 +163,10 @@ class SchellingModel(Model):
 
         self.mean_condition = np.sum(self.conditions) / self.conditions.size
         self.mean_income /= self.conditions.size
+
+        
+
+    
 
     def step(self):
         '''
@@ -171,5 +195,27 @@ class SchellingModel(Model):
         # Update datacollector variables
         self.mean_income += self.income_change / self.conditions.size
         self.mean_condition = np.sum(self.conditions) / self.conditions.size
+
+        self.house_numbers = []
+
+##        for cell in self.grid.coord_iter():
+##            x,y = cell[1],cell[2]
+
+        l = [1,2,3]
+        for part in range(0, 3):
+            types=[]
+            for x in range(15*part, 15*(part+1)):
+                for y in range(self.grid.width):
+                    agent = self.grid[y][x]
+                    types.append(agent.income_type())
+                counted = Counter(types)
+##                print(counted)
+##                print(sorted(counted.items()))
+            self.house_numbers.extend([types.count(x) for x in set(l)])
+##            self.house_numbers.extend([value for (key, value) in sorted(counted.items())])
+
+            
+           
+        
 
         self.datacollector.collect(self)
