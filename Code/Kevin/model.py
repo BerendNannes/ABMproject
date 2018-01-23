@@ -29,6 +29,7 @@ class SchellingAgent(Agent):
         self.pos = pos
         self.income = income
         self.empty = False
+        self.move_out = False
 
     def step(self):
         # shortened references
@@ -47,7 +48,8 @@ class SchellingAgent(Agent):
 
         # Decide if occupant moves out
         U = np.random.uniform()
-        if U < model.mobility*(1.5 - model.status + income_gap):
+        if not self.empty and U < model.mobility*(1.5 - model.status + income_gap):
+            self.move_out = True
             self.empty = True
             self.price = 0.5*(conditions[x,y]+mean_income)
 
@@ -66,21 +68,30 @@ class SchellingAgent(Agent):
         model = self.model
         conditions = model.conditions
 
-        if self.empty:
+        if self.move_out:
+            model.income_change -= self.income
+            self.income = 0
+            self.move_out = False
+
+        elif self.empty:
             bound = model.status+self.price            
             income = bounded_normal(0.5*bound,0.1,0.25*bound,min(1.0,0.75*bound))
 
-            model.income_change += income - self.income
-            self.income = income
+            if income > self.price:
+                model.income_change += income - self.income
+                self.income = income
 
-            x,y = self.pos
+                x,y = self.pos
 
-            # Decide if new owners improve the property
-            if self.rent_gap > 0 and income > conditions[x,y]:
-                improvement = bounded_normal(model.status-conditions[x,y],0.1,0.0,0.5)
-                conditions[x,y] = np.clip(conditions[x,y]+improvement,0,1)
+                # Decide if new owners improve the property
+                if self.rent_gap > 0 and income > conditions[x,y]:
+                    improvement = bounded_normal(model.status-conditions[x,y],0.1,0.0,0.5)
+                    conditions[x,y] = np.clip(conditions[x,y]+improvement,0,1)
 
-            self.empty = False
+                self.empty = False
+
+            else:
+                self.price = 0.5*(self.price + income)
 
 class SchellingModel(Model):
     '''
@@ -96,7 +107,6 @@ class SchellingModel(Model):
 
         # Global tracking variables
         self.mean_income = 0.0
-        self.mean_condition = 0.0
 
         self.schedule = SimultaneousActivation(self)
         self.grid = SingleGrid(height, width, torus=True)

@@ -88,7 +88,7 @@ model_params = {
 	"initial_condition": UserSettableParameter("slider", "Initial Neighborhood Condition", 0.25, 0.00, 1.00, 0.05),
 	"abandon_factor": UserSettableParameter("slider", "Abandonment Factor", 0.02, 0.00, 0.10, 0.005),
 	"status_var": UserSettableParameter("slider", "Status Variability (Noise)", 0.025, 0.00, 0.10, 0.005),
-	"det_rate": UserSettableParameter("slider", "Deterioration Rate", 0.002, 0.00, 0.01, 0.001)
+	"det_rate": UserSettableParameter("slider", "Deterioration Rate", 0.001, 0.00, 0.01, 0.001)
 
 
 }
