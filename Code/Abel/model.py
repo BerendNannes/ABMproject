@@ -4,6 +4,7 @@ import scipy.signal
 
 from mesa import Model, Agent
 from mesa.time import RandomActivation
+from mesa.time import SimultaneousActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
@@ -11,7 +12,7 @@ class SchellingAgent(Agent):
     '''
     Schelling segregation agent
     '''
-    def __init__(self, pos, model, wealth, pa = 0.0125):
+    def __init__(self, pos, model, income, pa = 0.0125):
         '''
         Create a new Schelling agent.
 
@@ -22,44 +23,57 @@ class SchellingAgent(Agent):
         '''
         super().__init__(pos, model)
         self.pos = pos
-        self.wealth = wealth
+        self.income = income
         self.pa = pa
+        self.move = False
+        self.other = False
         
-
-##    def step(self):
-##        similar = 0
-##        for neighbor in self.model.grid.neighbor_iter(self.pos):
-##            if neighbor.type == self.type:
-##                similar += 1
-##
-##        # If unhappy, move:
-##        if similar < self.model.homophily:
-##            # check if property is affordable		
-##            for i in range(int(self.model.density*self.model.schedule.get_agent_count())):
-##                b, c = self.model.grid.find_empty()
-##                price = self.model.property_prices[b][c]
-##                if price <= self.wealth:
-##                    self.model.grid.move_agent(self, (b,c))
-##                    return
-##            self.model.grid.move_to_empty(self)
-##                
-##        else:
-##                self.model.happy += 1
             
     def step(self):
         x, y = self.pos[0], self.pos[1]
-        #move
-        if self.pa*(1.5 - self.model.status + self.model.income_gap[x,y]) < random.random():
-            self.model.grid.move_to_empty(self)
-            self.model.property_prices[x, y] = 0.5*(self.model.condition_matrix[x,y]
-                                                + self.model.average_income_matrix[x,y])
-            self.model.schedule.remove(self)
-            self.model.grid.remove_agent(self)
-##            self.__del__(self)
+        #move to
+        if self.income == 0.:
+            income = bounded_repeated_normal(0.5*(self.model.status + self.model.property_prices[x,y]), 0.1, 0., 1.)
+            self.future_income = income
+            self.other == True
+            if self.model.property_prices[x,y] < income:
+                self.move = True
+            else:
+                self.move = False
+                
+        #move away
+        elif self.pa*(1.5 - self.model.status + self.model.income_gap[x,y]) < random.random():
+            self.move = True
+            self.other = False
         #renovate
-        elif  self.model.income_gap[x,y] > 0 and self.wealth > self.model.condition_matrix[x, y]:
-            self.model.condition_matrix[x, y] += bounded_repeated_normal(self.model.status
-                                                - self.model.condition_matrix[x, y], 0.1, 0, .5)
+        elif  self.model.income_gap[x,y] > 0 and self.income > self.model.condition_matrix[x, y]:
+            self.move = False
+            self.other = False
+
+        
+    def advance(self):
+        x, y = self.pos[0], self.pos[1]
+        #move to
+        if self.move:
+            if self.other:
+                self.income = self.future_income
+                self.model.income_matrix[x,y] = self.future_income
+            #move away
+            else:
+                self.model.property_prices[x, y] = 0.5*(self.model.condition_matrix[x,y]
+                                                    + self.model.average_income_matrix[x,y])
+                self.model.income_matrix[x, y] = 0
+        
+        #not sold
+        else:
+            if self.other:
+                self.model.property_prices[x,y] = 0.5*( self.model.property_prices[x,y] + self.future_income)
+                
+            #renovate
+            else:
+                self.model.condition_matrix[x, y] += bounded_repeated_normal(self.model.status
+                                                    - self.model.condition_matrix[x, y], 0.1, 0, .5)
+        
 
 			
 class SchellingModel(Model):
@@ -75,7 +89,7 @@ class SchellingModel(Model):
         self.width = width
         self.density = density
 
-        self.schedule = RandomActivation(self)
+        self.schedule = SimultaneousActivation(self)
         self.grid = SingleGrid(height, width, torus=True)
 
         self.status = 0.5
@@ -97,7 +111,7 @@ class SchellingModel(Model):
 
         # set conditions of properties
         #giving condition variable values in the range 0.258–0.774.
-        self.condition_matrix = np.random.uniform(.5, 0.1, (width,height))
+        self.condition_matrix = np.random.uniform(.258, 0.774, (width,height))
         
         self.income_matrix = np.zeros((height,width))
 
@@ -105,12 +119,18 @@ class SchellingModel(Model):
         for cell in self.grid.coord_iter():
             x = cell[1]
             y = cell[2]
-            wealth = self.condition_matrix[x,y] + bounded_repeated_normal(0., 0.025, 0., 1.)
             if random.random() < self.density:
-                agent = SchellingAgent((x, y), self, wealth, pa=self.pa)
+                income = self.condition_matrix[x,y] + bounded_repeated_normal(0., 0.025, 0., 1.)
+                agent = SchellingAgent((x, y), self, income, pa=self.pa)
                 self.grid.position_agent(agent, (x, y))
                 self.schedule.add(agent)
-                self.income_matrix[x,y] = agent.wealth
+                self.income_matrix[x,y] = agent.income
+            else:
+                income = 0
+                agent = SchellingAgent((x, y), self, income, pa=self.pa)
+                self.grid.position_agent(agent, (x, y))
+                self.schedule.add(agent)
+                self.income_matrix[x,y] = agent.income
                 
                         
         #calculate average income
@@ -145,6 +165,7 @@ class SchellingModel(Model):
         #status + new condition and new income + random
         self.status += self.average_conditions +  self.average_income + bounded_repeated_normal(0,
                                                                             self.sdelta, -.5, 0.5)
+        self.status = np.clip(self.status, 0., 1.)
 
         #Update rent gap
         self.rent_gap = np.maximum(self.average_condition_matrix - self.condition_matrix, 0)
@@ -172,26 +193,13 @@ class SchellingModel(Model):
         # Depricate house conditions and update house values
         self.condition_matrix -= self.deprate
         self.condition_matrix = np.maximum(self.condition_matrix, 0)
-        self.property_prices = 0.5*(self.condition_matrix + self.average_income_matrix)
-
-        # Let agents move out of the neighborhood
-        self.schedule.step()
-
+        self.property_prices = 0.5*(self.condition_matrix + self.average_income_matrix) #
+        
         #update
         self.update()
-
-        #Let agents move to the neighborhood
-        for forsalecell in self.grid.empties:
-            x,y = forsalecell[0], forsalecell[1]
-            wealth = bounded_repeated_normal(0.5*(self.status + self.property_prices[x,y]), 0.1, 0., 1.) 
-            if self.property_prices[x,y] < wealth:
-                agent = SchellingAgent((x, y), self, wealth =wealth, pa=self.pa)
-                self.grid.position_agent(agent, (x, y))
-                self.schedule.add(agent)
-                self.income_matrix[x,y] = agent.wealth
-            else:
-                self.property_prices[x,y] = 0.5*( self.property_prices[x,y] + wealth)
-
+        
+        # Let agents move out of the neighborhood
+        self.schedule.step()
 
         #Collect data
         self.datacollector.collect(self)

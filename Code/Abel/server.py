@@ -29,9 +29,9 @@ class SchellingTextVisualization(TextVisualization):
         '''
         Minority agents are X, Majority are O.
         '''
-        if a.wealth < 0.4:
+        if a.income < 0.4:
             return 'L'
-        elif a.wealth < 0.6:
+        elif a.income < 0.6:
             return 'M'
         else:
             return 'H'
@@ -76,9 +76,11 @@ def schelling_draw(agent):
     Portrayal Method for canvas
     '''
     portrayal = {"Shape": "rect", "h": 1.0, "w": 1.0 ,"Filled": "true", "Layer": 0}
-    if agent.wealth < 0.4:
+    if agent.income == 0.:
+        portrayal["Color"] = "Green"
+    elif agent.income < 0.4:
         portrayal["Color"] = "Red"
-    elif agent.wealth < 0.6:
+    elif agent.income < 0.6:
         portrayal["Color"] = "Purple"
     else:
         portrayal["Color"] = "Blue"
@@ -98,9 +100,9 @@ model_params = {
     "height": 50,
     "width": 50,
     "density": UserSettableParameter("slider", "Agent density", 0.9, 0.1, 1.0, 0.05),
-    "deprate": UserSettableParameter("slider", "Depreciation Rate", 0.0028, 0.00, 1.0, 0.01),
-    "sdelta": UserSettableParameter("slider", "Sdelta", 0.025, 0, 1, 0.01),
-    "pa": UserSettableParameter("slider", "Pa", 0.0125, 0, 1, 0.01)
+    "deprate": UserSettableParameter("slider", "Depreciation Rate", 0.0028, 0.00, 0.1, 0.01),
+    "sdelta": UserSettableParameter("slider", "Sdelta", 0.025, 0, .1, 0.01),
+    "pa": UserSettableParameter("slider", "Pa", 0.0125, 0, .1, 0.01)
 }
 
 server = ModularServer(SchellingModel,
