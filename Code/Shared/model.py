@@ -52,11 +52,14 @@ class SchellingAgent(Agent):
         # Decide if occupant moves out
         d_factor = self.model.d_factor
         U = np.random.uniform()
-        if not self.empty and U < model.mobility*(1.5 - model.status + income_gap):
+        if not self.empty and U < model.mobility*(1.5 - model.status + income_gap)*(1+d_factor*(0.5 - y/self.model.height)):
             self.move_out = True
             self.empty = True
-            #self.price = 0.5*(conditions[x,y]+mean_income)
-            self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(0.5 - y/self.model.height),0,1)
+            self.price = 0.5*(conditions[x,y]+mean_income)
+            #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(0.5 - y/self.model.height),0,1)
+            #value = 0.5*(conditions[x,y]+mean_income)
+            #self.price = np.clip(value*(1+d_factor*(0.5 - y/self.model.height)),0,1)
+            #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(-1*y/self.model.height),0,1)
 
         if self.empty:
             # Prepare list with neighboring property conditions
@@ -120,7 +123,7 @@ class SchellingModel(Model):
         self.mean_income = 0.0
 
         self.schedule = SimultaneousActivation(self)
-        self.grid = SingleGrid(height, width, torus=True)
+        self.grid = SingleGrid(height, width, torus=False)
         
         self.datacollector = DataCollector(
             model_reporters={"status": lambda m : m.status, 
@@ -144,7 +147,7 @@ class SchellingModel(Model):
         for cell in self.grid.coord_iter():
             x,y = cell[1],cell[2]
 
-            self.conditions[x,y] = bounded_normal(0.5,0.1,0.0,1.0)
+            self.conditions[x,y] = bounded_normal(0.50,0.1,0.0,1.0)
 
             # Income initially differs little from property conditions
             while True:
