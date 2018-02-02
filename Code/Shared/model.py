@@ -57,7 +57,7 @@ class SchellingAgent(Agent):
             self.empty = True
             #self.price = 0.5*(conditions[x,y]+mean_income)
             #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(0.5 - y/self.model.height),0,1)
-            #value = 0.5*(conditions[x,y]+mean_income)
+            value = 0.5*(conditions[x,y]+mean_income)
             self.price = np.clip(value*(1+d_factor*(0.5 - y/self.model.height)),0,1)
             #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(-1*y/self.model.height),0,1)
 
