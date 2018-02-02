@@ -52,13 +52,13 @@ class SchellingAgent(Agent):
         # Decide if occupant moves out
         d_factor = self.model.d_factor
         U = np.random.uniform()
-        if not self.empty and U < model.mobility*(1.5 - model.status + income_gap)*(1+d_factor*(0.5 - y/self.model.height)):
+        if not self.empty and U < model.mobility*(1.5 - model.status + income_gap):
             self.move_out = True
             self.empty = True
-            self.price = 0.5*(conditions[x,y]+mean_income)
+            #self.price = 0.5*(conditions[x,y]+mean_income)
             #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(0.5 - y/self.model.height),0,1)
             #value = 0.5*(conditions[x,y]+mean_income)
-            #self.price = np.clip(value*(1+d_factor*(0.5 - y/self.model.height)),0,1)
+            self.price = np.clip(value*(1+d_factor*(0.5 - y/self.model.height)),0,1)
             #self.price = np.clip(0.5*(conditions[x,y]+mean_income) + d_factor*(-1*y/self.model.height),0,1)
 
         if self.empty:
