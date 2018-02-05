@@ -102,8 +102,8 @@ class SchellingAgent(Agent):
 
             else:
                 conditions[x,y] = np.clip(conditions[x,y]-0.2*self.model.depreciation_rate,0,1)
-                #self.price = 0.5*(self.price + income)
-                self.price = np.clip(0.2*self.price,0,1)
+                self.price = 0.5*(self.price + income)
+                #self.price = np.clip(0.2*self.price,0,1)
 
 class SchellingModel(Model):
     '''
@@ -164,7 +164,7 @@ class SchellingModel(Model):
         self.mean_income /= self.conditions.size
         
         # turn physical boundary on
-        self.create_bound()
+        #self.create_bound()
 
     def step(self):
         '''
