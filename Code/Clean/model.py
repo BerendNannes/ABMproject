@@ -67,7 +67,8 @@ class PropertyAgent(Agent):
                     neighborhood_conditions.append(conditions[cell[0],cell[1]])
 
             # Calculate rent gap
-            mean_condition = sum(neighborhood_conditions) / len(neighborhood_conditions)
+            mean_condition = (sum(neighborhood_conditions) 
+                                / len(neighborhood_conditions))
             self.rent_gap = max(0.0, mean_condition - conditions[x,y])
 
     def advance(self):
@@ -92,7 +93,8 @@ class PropertyAgent(Agent):
 
                 # Decide if new owners improve the property
                 if self.rent_gap > 0 and income > conditions[x,y]:
-                    improvement = bounded_normal(model.status-conditions[x,y],0.1,0.0,0.5)
+                    improvement = bounded_normal(model.status-conditions[x,y],
+                                                   0.1,0.0,0.5)
                     conditions[x,y] = np.clip(conditions[x,y]+improvement,0,1)
 
                 self.empty = False
