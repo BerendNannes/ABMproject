@@ -22,7 +22,7 @@ def bounded_normal(mu,sigma,minimum,maximum):
 
 class PropertyAgent(Agent):
     '''
-    Schelling segregation agent
+    Property Agent
     '''
     def __init__(self, pos, model, income):
         '''
@@ -99,7 +99,8 @@ class PropertyAgent(Agent):
 
             else:
                 # decrease price and condition if property stays empty
-                conditions[x,y] = np.clip(conditions[x,y]-0.2*self.model.depreciation_rate,0,1)
+                conditions[x,y] = np.clip(conditions[x,y]
+                                            - 0.2*self.model.depreciation_rate,0,1)
                 self.price = 0.5*(self.price + income)
 
 class GentrificationModel(Model):
@@ -107,7 +108,8 @@ class GentrificationModel(Model):
     Model class for the Gentrification model.
     '''
 
-    def __init__(self, height, width, depreciation_rate, mobility, status, stat_var, d_factor):
+    def __init__(self, height, width, depreciation_rate, mobility, status, 
+                stat_var, d_factor):
         # Set model parameters
         self.depreciation_rate = depreciation_rate
         self.mobility = mobility
@@ -180,7 +182,8 @@ class GentrificationModel(Model):
         conditions_change = self.conditions - old_conditions
 
         # Update neighborhood status
-        self.status += (self.income_change + np.sum(conditions_change)) / (conditions_change.size)
+        self.status += ((self.income_change + np.sum(conditions_change)) 
+                        / (conditions_change.size))
         self.status += np.random.normal(0.0, self.stat_var)
         self.status = np.clip(self.status,0,1)
 
@@ -199,7 +202,9 @@ class GentrificationModel(Model):
             self.running = False
             
         
-        if self.status == 1.0 and 0.5*(self.mean_condition + self.mean_income) > 0.5 and self.hit_bottom == True:
+        if (self.status == 1.0 and 
+        0.5*(self.mean_condition + self.mean_income) > 0.5 and 
+        self.hit_bottom == True):
             self.running = False
             self.gent_time = (self.schedule.steps - self.last_bottom)/12
            
