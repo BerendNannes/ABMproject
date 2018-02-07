@@ -17,10 +17,14 @@ class DataElement(TextElement):
         pass
 
     def render(self, model):
-        return ("<b>Neighborhood Status: " + str(round(model.status,2))+ "<br/>" +
-                "<div style='color: blue'>Average Income: " + str(round(model.mean_income,2))+ "</div><br/>" +
-                "<div style='color: green'>Average Property Condition: " + str(round(model.mean_condition,2)) + "</div>" +
-                "Time (years): " + str(int(model.schedule.steps/12)) + "<br/></b>")
+        return ("<b>Neighborhood Status: " + 
+                str(round(model.status,2))+ "<br/>" +
+                "<div style='color: blue'>Average Income: " + 
+                str(round(model.mean_income,2))+ "</div><br/>" +
+                "<div style='color: green'>Average Property Condition: " + 
+                str(round(model.mean_condition,2)) + "</div>" +
+                "Time (years): " + str(int(model.schedule.steps/12)) + 
+                "<br/></b>")
 
 
 def canvas_draw(agent):
@@ -53,11 +57,16 @@ plot_chart = ChartModule([{"Label": "status", "Color": "Black"},
 model_params = {
     "height": grid_size,
     "width": grid_size,
-    "depreciation_rate": UserSettableParameter("slider", "Depreciation Rate", 0.0015, 0.00, 0.01, 0.0005),
-    "mobility": UserSettableParameter("slider", "Agent mobility", 0.025, 0.00, 0.10, 0.005),
-    "status": UserSettableParameter("slider", "Initial Neighborhood Status", 0.50, 0.00, 1.00, 0.01),
-    "stat_var": UserSettableParameter("slider", "Status Variability (Noise)", 0.025, 0.00, 0.10, 0.005),
-    "d_factor": UserSettableParameter("slider", "d - Dependency", 0.5, 0.00, 1.0, 0.1)
+    "depreciation_rate": UserSettableParameter(
+                    "slider", "Depreciation Rate", 0.0015, 0.00, 0.01, 0.0005),
+    "mobility": UserSettableParameter(
+                    "slider", "Agent mobility", 0.025, 0.00, 0.10, 0.005),
+    "status": UserSettableParameter(
+                    "slider", "Initial Neighborhood Status", 0.50, 0.00, 1.00, 0.01),
+    "stat_var": UserSettableParameter(
+                    "slider", "Status Variability (Noise)", 0.025, 0.00, 0.10, 0.005),
+    "d_factor": UserSettableParameter(
+                    "slider", "d - Dependency", 0.5, 0.00, 1.0, 0.1)
 }
 
 server = ModularServer(GentrificationModel,
